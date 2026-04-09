@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Todo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== 側邊欄 ===== -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <button id="sidebar-toggle" class="icon-btn" title="收合選單">☰</button>
+        <h1 class="sidebar-brand">My Todo</h1>
+      </div>
+
+      <div class="sidebar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="搜尋" autocomplete="off" />
+      </div>
+
+      <!-- 智慧清單 -->
+      <nav id="smart-lists" class="sidebar-nav">
+        <button class="nav-item active" data-view="myday">
+          <span class="nav-icon">☀️</span>
+          <span class="nav-label">我的一天</span>
+          <span class="nav-count" id="count-myday"></span>
+        </button>
+        <button class="nav-item" data-view="important">
+          <span class="nav-icon">⭐</span>
+          <span class="nav-label">重要</span>
+          <span class="nav-count" id="count-important"></span>
+        </button>
+        <button class="nav-item" data-view="planned">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">已規劃</span>
+          <span class="nav-count" id="count-planned"></span>
+        </button>
+        <button class="nav-item" data-view="all">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">所有任務</span>
+          <span class="nav-count" id="count-all"></span>
+        </button>
+        <button class="nav-item" data-view="completed">
+          <span class="nav-icon">✅</span>
+          <span class="nav-label">已完成</span>
+          <span class="nav-count" id="count-completed"></span>
+        </button>
+      </nav>
+
+      <hr class="sidebar-divider" />
+
+      <!-- 自訂清單 -->
+      <nav id="custom-lists" class="sidebar-nav"></nav>
+
+      <div class="sidebar-footer">
+        <button id="add-list-btn" class="nav-item add-list">
+          <span class="nav-icon">＋</span>
+          <span class="nav-label">新增清單</span>
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="icon-btn" onclick="toggleTheme()" title="切換主題">🌓</button>
+        <button class="icon-btn" onclick="exportAllData()" title="匯出資料">📤</button>
+        <button class="icon-btn" onclick="importAllData()" title="匯入資料">📥</button>
+      </div>
+    </aside>
+
+    <!-- ===== 主內容區 ===== -->
+    <main id="main-content">
+      <!-- 頂部標頭 -->
+      <header id="main-header">
+        <button id="mobile-menu-btn" class="icon-btn mobile-only" onclick="toggleSidebar()">☰</button>
+        <div class="header-left">
+          <h2 id="view-title">☀️ 我的一天</h2>
+          <span id="view-date" class="header-date"></span>
+        </div>
+        <div class="header-actions">
+          <div class="sort-dropdown">
+            <button class="icon-btn" id="sort-btn" title="排序">⇅</button>
+            <div class="sort-menu hidden" id="sort-menu">
+              <button data-sort="default">預設</button>
+              <button data-sort="alpha">名稱 A→Z</button>
+              <button data-sort="alpha-desc">名稱 Z→A</button>
+              <button data-sort="due">到期日</button>
+              <button data-sort="created">建立日期</button>
+              <button data-sort="important">重要性</button>
+            </div>
+          </div>
+          <button class="icon-btn" id="suggestions-btn" title="建議" onclick="toggleSuggestions()">💡</button>
+        </div>
+      </header>
+
+      <!-- 建議面板 -->
+      <div id="suggestions-panel" class="suggestions-panel hidden">
+        <div class="suggestions-header">
+          <h3>💡 建議</h3>
+          <button class="icon-btn" onclick="toggleSuggestions()">✕</button>
+        </div>
+        <div id="suggestions-list" class="suggestions-list"></div>
+      </div>
+
+      <!-- 新增任務輸入 -->
+      <div id="add-task-bar" class="add-task-bar">
+        <button class="add-task-circle" id="add-task-circle-btn">＋</button>
+        <input type="text" id="add-task-input" placeholder="新增任務" autocomplete="off" />
+        <div class="add-task-shortcuts">
+          <button class="shortcut-btn" id="shortcut-myday" title="加入我的一天">☀️</button>
+          <button class="shortcut-btn" id="shortcut-due" title="設定到期日">📅</button>
+          <button class="shortcut-btn" id="shortcut-important" title="標記為重要">⭐</button>
+        </div>
+      </div>
+
+      <!-- 任務清單 -->
+      <div id="task-list-container" class="task-list-container">
+        <div id="task-list" class="task-list"></div>
+
+        <!-- 已完成摺疊區 -->
+        <div id="completed-section" class="completed-section hidden">
+          <button id="completed-toggle" class="completed-toggle">
+            <span class="toggle-arrow">▶</span>
+            已完成 <span id="completed-count-inline">0</span>
+          </button>
+          <div id="completed-list" class="task-list hidden"></div>
+        </div>
+      </div>
+
+      <!-- 空狀態 -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon" id="empty-icon">☀️</div>
+        <h3 id="empty-title">專注你的一天</h3>
+        <p id="empty-desc">你今天想做什麼？</p>
+      </div>
+    </main>
+
+    <!-- ===== 任務詳情面板 ===== -->
+    <aside id="detail-panel" class="detail-panel hidden">
+      <div class="detail-header">
+        <button class="icon-btn" onclick="closeDetail()">✕</button>
+        <button class="icon-btn danger-text" id="delete-task-btn" title="刪除任務">🗑️</button>
+      </div>
+
+      <div class="detail-body">
+        <!-- 標題 -->
+        <div class="detail-title-row">
+          <button class="task-check-detail" id="detail-check"></button>
+          <input type="text" id="detail-title" class="detail-title-input" />
+          <button class="star-btn" id="detail-star">☆</button>
+        </div>
+
+        <!-- 子任務 / 步驟 -->
+        <div class="detail-section">
+          <div id="steps-list" class="steps-list"></div>
+          <div class="add-step-row">
+            <span class="step-icon">＋</span>
+            <input type="text" id="add-step-input" placeholder="新增步驟" />
+          </div>
+        </div>
+
+        <!-- 加入我的一天 -->
+        <button class="detail-action-btn" id="detail-myday-btn">
+          <span>☀️</span> <span id="detail-myday-text">加入「我的一天」</span>
+        </button>
+
+        <!-- 提醒 -->
+        <div class="detail-action-btn" id="detail-reminder-btn">
+          <span>🔔</span>
+          <span id="detail-reminder-text">提醒我</span>
+          <button class="clear-btn hidden" id="clear-reminder-btn">✕</button>
+        </div>
+        <input type="datetime-local" id="detail-reminder-input" class="hidden" />
+
+        <!-- 到期日 -->
+        <div class="detail-action-btn" id="detail-due-btn">
+          <span>📅</span>
+          <span id="detail-due-text">新增到期日</span>
+          <button class="clear-btn hidden" id="clear-due-btn">✕</button>
+        </div>
+        <input type="date" id="detail-due-input" class="hidden" />
+
+        <!-- 重複 -->
+        <div class="detail-action-btn" id="detail-repeat-btn">
+          <span>🔁</span>
+          <span id="detail-repeat-text">重複</span>
+        </div>
+        <select id="detail-repeat-select" class="hidden">
+          <option value="">不重複</option>
+          <option value="daily">每天</option>
+          <option value="weekdays">每個工作日</option>
+          <option value="weekly">每週</option>
+          <option value="monthly">每月</option>
+          <option value="yearly">每年</option>
+        </select>
+
+        <!-- 分類標籤 -->
+        <div class="detail-section">
+          <div class="detail-action-btn" id="detail-category-btn">
+            <span>🏷️</span>
+            <span>分類標籤</span>
+          </div>
+          <div id="category-chips" class="category-chips"></div>
+          <div id="category-picker" class="category-picker hidden">
+            <button class="cat-chip" data-color="blue" style="--cat-color:#4A90D9">🔵 藍色</button>
+            <button class="cat-chip" data-color="red" style="--cat-color:#E74C3C">🔴 紅色</button>
+            <button class="cat-chip" data-color="orange" style="--cat-color:#F39C12">🟠 橙色</button>
+            <button class="cat-chip" data-color="green" style="--cat-color:#27AE60">🟢 綠色</button>
+            <button class="cat-chip" data-color="purple" style="--cat-color:#8E44AD">🟣 紫色</button>
+            <button class="cat-chip" data-color="yellow" style="--cat-color:#F1C40F">🟡 黃色</button>
+          </div>
+        </div>
+
+        <!-- 附檔 -->
+        <button class="detail-action-btn" id="detail-file-btn">
+          <span>📎</span> <span>新增檔案</span>
+        </button>
+        <div id="file-list" class="file-list"></div>
+
+        <!-- 備註 -->
+        <div class="detail-section notes-section">
+          <textarea id="detail-notes" placeholder="新增備註" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="detail-footer">
+        <span id="detail-created">建立於</span>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===== 日期快捷選單 ===== -->
+  <div id="date-quick-menu" class="date-quick-menu hidden">
+    <button data-date="today">📌 今天</button>
+    <button data-date="tomorrow">📅 明天</button>
+    <button data-date="next-week">📆 下週</button>
+    <button data-date="pick">🗓️ 選擇日期...</button>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/list.js"></script>
+  <script src="js/task.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
