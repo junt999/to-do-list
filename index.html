@@ -4,188 +4,338 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Todo</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ========== 變數 ========== */
+    :root {
+      --bg:#F3F3F3;--bg-sidebar:#FFFFFF;--bg-card:#FFFFFF;--bg-hover:#EAEAEA;
+      --bg-input:#F5F5F5;--bg-detail:#FAFAFA;--text:#1A1A1A;--text2:#555;
+      --text3:#999;--border:#E0E0E0;--accent:#2564CF;--accent-lt:#DBE9FE;
+      --accent-hv:#1B4EA3;--star:#F5C518;--danger:#D32F2F;--ok:#2E7D32;
+      --shadow:0 2px 8px rgba(0,0,0,.08);--r:8px;--side-w:260px;--det-w:340px;
+      --cat-blue:#4A90D9;--cat-red:#E74C3C;--cat-orange:#F39C12;
+      --cat-green:#27AE60;--cat-purple:#8E44AD;--cat-yellow:#F1C40F;
+    }
+    [data-theme="dark"]{
+      --bg:#1E1E1E;--bg-sidebar:#252526;--bg-card:#2D2D2D;--bg-hover:#383838;
+      --bg-input:#333;--bg-detail:#2D2D2D;--text:#E0E0E0;--text2:#AAA;
+      --text3:#666;--border:#444;--accent:#4A9EFF;--accent-lt:#1A3A5C;
+      --accent-hv:#6BB3FF;--shadow:0 2px 8px rgba(0,0,0,.35);
+    }
+
+    /* ========== Reset ========== */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',-apple-system,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+    button{cursor:pointer;font-family:inherit}
+    input,textarea,select{font-family:inherit}
+    .hidden{display:none!important}
+
+    /* ========== 佈局 ========== */
+    #app{display:flex;height:100vh}
+
+    /* --- 側邊欄 --- */
+    #sidebar{width:var(--side-w);min-width:var(--side-w);background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:.25s ease;z-index:100}
+    #sidebar.collapsed{margin-left:calc(var(--side-w)*-1);min-width:0;width:0;overflow:hidden}
+    .side-hd{display:flex;align-items:center;gap:8px;padding:14px 14px 6px}
+    .brand{font-size:1.05rem;font-weight:700;color:var(--accent)}
+    .ibtn{width:34px;height:34px;border:none;background:none;border-radius:6px;font-size:1.05rem;color:var(--text2);display:flex;align-items:center;justify-content:center}
+    .ibtn:hover{background:var(--bg-hover)}
+
+    .side-search{display:flex;align-items:center;gap:6px;margin:6px 10px;padding:7px 10px;background:var(--bg-input);border-radius:var(--r);border:1px solid var(--border)}
+    .side-search input{flex:1;border:none;background:none;outline:none;color:var(--text);font-size:.85rem}
+
+    .snav{padding:4px 6px}
+    .snav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;background:none;border-radius:var(--r);color:var(--text);font-size:.88rem;text-align:left;transition:.15s}
+    .snav-item:hover{background:var(--bg-hover)}
+    .snav-item.active{background:var(--accent-lt);color:var(--accent);font-weight:600}
+    .snav-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
+    .snav-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .snav-cnt{font-size:.7rem;color:var(--text3);background:var(--bg-hover);padding:1px 7px;border-radius:10px}
+    .snav-cnt:empty{display:none}
+
+    .side-div{border:none;border-top:1px solid var(--border);margin:6px 14px}
+    .side-ft{padding:4px 6px}
+    .add-list-btn{color:var(--accent)}
+    .add-list-btn:hover{background:var(--accent-lt)}
+
+    .side-bottom{margin-top:auto;padding:10px;display:flex;gap:4px;border-top:1px solid var(--border)}
+
+    /* 自訂清單項 */
+    .list-wrap{display:flex;align-items:center}
+    .list-wrap .snav-item{flex:1}
+    .list-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .list-acts{display:none;gap:2px}
+    .list-wrap:hover .list-acts{display:flex}
+    .la-btn{width:26px;height:26px;border:none;background:none;border-radius:4px;font-size:.75rem;color:var(--text3)}
+    .la-btn:hover{background:var(--bg-hover);color:var(--text)}
+
+    /* --- 主區 --- */
+    #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    #main-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 6px;flex-shrink:0}
+    .hd-left{flex:1}
+    #v-title{font-size:1.2rem;font-weight:700;color:var(--accent)}
+    .hd-date{font-size:.78rem;color:var(--text3);margin-top:1px;display:block}
+    .hd-acts{display:flex;gap:4px}
+
+    /* 排序 */
+    .sort-wrap{position:relative}
+    .sort-menu{position:absolute;top:38px;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);z-index:50;min-width:150px;overflow:hidden}
+    .sort-menu button{display:block;width:100%;padding:9px 14px;border:none;background:none;text-align:left;color:var(--text);font-size:.83rem}
+    .sort-menu button:hover{background:var(--bg-hover)}
+
+    /* 建議 */
+    .sug-panel{margin:0 22px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+    .sug-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .sug-hd h3{font-size:.88rem}
+    .sug-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border:none;background:none;border-radius:6px;color:var(--text);font-size:.83rem;text-align:left;width:100%}
+    .sug-item:hover{background:var(--bg-hover)}
+
+    /* 新增任務 */
+    .add-bar{display:flex;align-items:center;gap:10px;margin:10px 22px;padding:11px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);transition:.2s}
+    .add-bar:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-lt)}
+    .add-circle{width:26px;height:26px;border:2px solid var(--accent);border-radius:50%;background:none;color:var(--accent);font-size:.95rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .add-bar input{flex:1;border:none;background:none;outline:none;color:var(--text);font-size:.9rem}
+    .add-bar input::placeholder{color:var(--text3)}
+    .sc-btns{display:flex;gap:2px}
+    .sc-btn{width:30px;height:30px;border:none;background:none;border-radius:4px;font-size:.9rem;opacity:.45;transition:.15s}
+    .sc-btn:hover{opacity:1}
+    .sc-btn.on{opacity:1;background:var(--accent-lt)}
+
+    /* 任務列表容器 */
+    .tl-wrap{flex:1;overflow-y:auto;padding:0 22px 22px}
+
+    /* 任務卡 */
+    .tl{display:flex;flex-direction:column;gap:2px}
+    .tc{display:flex;align-items:center;gap:11px;padding:11px 14px;background:var(--bg-card);border-radius:var(--r);border:1px solid transparent;transition:.15s;cursor:pointer;user-select:none}
+    .tc:hover{background:var(--bg-hover)}
+    .tc.sel{border-color:var(--accent);background:var(--accent-lt)}
+    .tc.done{opacity:.65}
+
+    .tcheck{width:21px;height:21px;border:2px solid var(--text3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.65rem;color:transparent;transition:.15s}
+    .tcheck:hover{border-color:var(--accent)}
+    .tc.done .tcheck{background:var(--ok);border-color:var(--ok);color:#fff}
+
+    .tbody{flex:1;min-width:0}
+    .ttitle{font-size:.88rem;line-height:1.4;word-break:break-word}
+    .tc.done .ttitle{text-decoration:line-through;color:var(--text3)}
+    .tmeta{display:flex;align-items:center;gap:7px;margin-top:2px;font-size:.72rem;color:var(--text3);flex-wrap:wrap}
+    .mi{display:flex;align-items:center;gap:2px}
+    .mi.overdue{color:var(--danger)}
+    .mi.today{color:var(--accent)}
+    .cdots{display:flex;gap:3px}
+    .cdot{width:7px;height:7px;border-radius:50%}
+
+    .tstar{width:28px;height:28px;border:none;background:none;font-size:1.05rem;flex-shrink:0;color:var(--text3);transition:.15s}
+    .tstar:hover{color:var(--star)}
+    .tstar.on{color:var(--star)}
+
+    /* 已完成折疊 */
+    .comp-sec{margin-top:14px}
+    .comp-tog{display:flex;align-items:center;gap:7px;width:100%;padding:9px 14px;border:none;background:none;color:var(--text2);font-size:.83rem;font-weight:600;border-radius:var(--r)}
+    .comp-tog:hover{background:var(--bg-hover)}
+    .tog-arrow{transition:transform .2s;font-size:.65rem}
+    .tog-arrow.open{transform:rotate(90deg)}
+
+    /* 空狀態 */
+    .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center}
+    .empty-ic{font-size:3.5rem;margin-bottom:14px}
+    .empty h3{font-size:1.1rem;margin-bottom:6px}
+    .empty p{color:var(--text3);font-size:.88rem}
+
+    /* --- 詳情面板 --- */
+    #detail{width:var(--det-w);min-width:var(--det-w);background:var(--bg-detail);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:.2s}
+    #detail.hidden{display:none}
+    .det-hd{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+    .det-body{padding:14px;flex:1}
+    .det-title-row{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+    .dcheck{width:23px;height:23px;border:2px solid var(--text3);border-radius:50%;background:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:transparent;transition:.15s}
+    .dcheck.on{background:var(--ok);border-color:var(--ok);color:#fff}
+    .dtitle-in{flex:1;border:none;background:none;outline:none;font-size:1.05rem;font-weight:600;color:var(--text)}
+    .dtitle-in.line{text-decoration:line-through;color:var(--text3)}
+    .dstar{width:30px;height:30px;border:none;background:none;font-size:1.2rem;color:var(--text3)}
+    .dstar.on{color:var(--star)}
+
+    .det-sec{margin-bottom:10px}
+    .steps-list{display:flex;flex-direction:column;gap:2px}
+    .step{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:6px}
+    .step:hover{background:var(--bg-hover)}
+    .scheck{width:17px;height:17px;border:2px solid var(--text3);border-radius:50%;background:none;flex-shrink:0;font-size:.55rem;display:flex;align-items:center;justify-content:center;color:transparent;cursor:pointer}
+    .scheck.on{background:var(--ok);border-color:var(--ok);color:#fff}
+    .stitle{flex:1;border:none;background:none;outline:none;color:var(--text);font-size:.83rem}
+    .stitle.line{text-decoration:line-through;color:var(--text3)}
+    .sdel{width:22px;height:22px;border:none;background:none;color:var(--text3);font-size:.75rem;display:none}
+    .step:hover .sdel{display:flex;align-items:center;justify-content:center}
+
+    .add-step{display:flex;align-items:center;gap:7px;padding:5px 7px}
+    .add-step span{color:var(--accent);font-size:.85rem}
+    .add-step input{flex:1;border:none;background:none;outline:none;color:var(--text);font-size:.83rem}
+
+    .dact{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border:none;background:none;border-radius:6px;color:var(--text);font-size:.83rem;cursor:pointer;text-align:left;position:relative}
+    .dact:hover{background:var(--bg-hover)}
+    .dact.on{color:var(--accent)}
+    .clr-btn{position:absolute;right:7px;width:22px;height:22px;border:none;background:none;color:var(--text3);font-size:.75rem;border-radius:50%;cursor:pointer}
+    .clr-btn:hover{background:var(--bg-hover)}
+
+    .cat-chips{display:flex;gap:5px;padding:3px 11px;flex-wrap:wrap}
+    .cat-chip{padding:2px 9px;border-radius:11px;font-size:.72rem;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;gap:3px}
+    .cat-chip .rx{background:none;border:none;color:#fff;cursor:pointer;font-size:.65rem;opacity:.7;padding:0}
+    .cat-chip .rx:hover{opacity:1}
+    .cat-pick{display:flex;gap:5px;padding:6px 11px;flex-wrap:wrap}
+    .cpk{padding:3px 9px;border-radius:11px;font-size:.72rem;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer}
+    .cpk:hover{border-color:var(--accent)}
+
+    .notes-sec textarea{width:100%;border:1px solid var(--border);background:var(--bg-input);color:var(--text);border-radius:var(--r);padding:9px;font-size:.83rem;resize:vertical;outline:none;min-height:70px}
+    .notes-sec textarea:focus{border-color:var(--accent)}
+
+    .det-ft{padding:10px 14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text3);text-align:center}
+    .danger-text{color:var(--danger)!important}
+
+    /* --- 日期快捷 --- */
+    .dq-menu{position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);z-index:200;min-width:170px;overflow:hidden}
+    .dq-menu button{display:block;width:100%;padding:9px 14px;border:none;background:none;text-align:left;color:var(--text);font-size:.83rem}
+    .dq-menu button:hover{background:var(--bg-hover)}
+
+    /* --- Toast --- */
+    .toast-wrap{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-direction:column;align-items:center;gap:7px}
+    .toast{background:var(--bg-card);color:var(--text);padding:9px 18px;border-radius:var(--r);box-shadow:var(--shadow);font-size:.83rem;border-left:4px solid var(--accent);animation:toastIn .25s ease}
+    @keyframes toastIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+    /* --- Mobile --- */
+    .mob{display:none}
+    @media(max-width:900px){
+      #detail{position:fixed;right:0;top:0;height:100vh;z-index:150;box-shadow:var(--shadow)}
+    }
+    @media(max-width:700px){
+      :root{--side-w:260px;--det-w:100vw}
+      #sidebar{position:fixed;left:0;top:0;height:100vh;z-index:200;box-shadow:var(--shadow)}
+      #sidebar.collapsed{margin-left:calc(var(--side-w)*-1)}
+      .mob{display:flex}
+      #sidebar .side-hd .ibtn:first-child{display:none}
+      #main-hd{padding:14px 14px 6px}
+      .add-bar{margin:10px 14px}
+      .tl-wrap{padding:0 14px 14px}
+      #detail{width:100vw;min-width:100vw}
+    }
+  </style>
 </head>
 <body>
   <div id="app">
-    <!-- ===== 側邊欄 ===== -->
-    <aside id="sidebar">
-      <div class="sidebar-header">
-        <button id="sidebar-toggle" class="icon-btn" title="收合選單">☰</button>
-        <h1 class="sidebar-brand">My Todo</h1>
+    <!-- 側邊欄 -->
+    <aside id="sidebar" class="collapsed">
+      <div class="side-hd">
+        <button class="ibtn" onclick="toggleSidebar()">☰</button>
+        <span class="brand">My Todo</span>
       </div>
-
-      <div class="sidebar-search">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="search-input" placeholder="搜尋" autocomplete="off" />
+      <div class="side-search">
+        <span style="font-size:.85rem;color:var(--text3)">🔍</span>
+        <input type="text" id="search-in" placeholder="搜尋" autocomplete="off" />
       </div>
-
-      <!-- 智慧清單 -->
-      <nav id="smart-lists" class="sidebar-nav">
-        <button class="nav-item active" data-view="myday">
-          <span class="nav-icon">☀️</span>
-          <span class="nav-label">我的一天</span>
-          <span class="nav-count" id="count-myday"></span>
-        </button>
-        <button class="nav-item" data-view="important">
-          <span class="nav-icon">⭐</span>
-          <span class="nav-label">重要</span>
-          <span class="nav-count" id="count-important"></span>
-        </button>
-        <button class="nav-item" data-view="planned">
-          <span class="nav-icon">📅</span>
-          <span class="nav-label">已規劃</span>
-          <span class="nav-count" id="count-planned"></span>
-        </button>
-        <button class="nav-item" data-view="all">
-          <span class="nav-icon">📋</span>
-          <span class="nav-label">所有任務</span>
-          <span class="nav-count" id="count-all"></span>
-        </button>
-        <button class="nav-item" data-view="completed">
-          <span class="nav-icon">✅</span>
-          <span class="nav-label">已完成</span>
-          <span class="nav-count" id="count-completed"></span>
-        </button>
-      </nav>
-
-      <hr class="sidebar-divider" />
-
-      <!-- 自訂清單 -->
-      <nav id="custom-lists" class="sidebar-nav"></nav>
-
-      <div class="sidebar-footer">
-        <button id="add-list-btn" class="nav-item add-list">
-          <span class="nav-icon">＋</span>
-          <span class="nav-label">新增清單</span>
+      <nav class="snav" id="smart-lists"></nav>
+      <hr class="side-div" />
+      <nav class="snav" id="custom-lists"></nav>
+      <div class="side-ft">
+        <button class="snav-item add-list-btn" onclick="addNewList()">
+          <span class="snav-icon">＋</span><span class="snav-lbl">新增清單</span>
         </button>
       </div>
-
-      <div class="sidebar-bottom">
-        <button class="icon-btn" onclick="toggleTheme()" title="切換主題">🌓</button>
-        <button class="icon-btn" onclick="exportAllData()" title="匯出資料">📤</button>
-        <button class="icon-btn" onclick="importAllData()" title="匯入資料">📥</button>
+      <div class="side-bottom">
+        <button class="ibtn" onclick="toggleTheme()" title="切換主題">🌓</button>
+        <button class="ibtn" onclick="doExport()" title="匯出">📤</button>
+        <button class="ibtn" onclick="doImport()" title="匯入">📥</button>
       </div>
     </aside>
 
-    <!-- ===== 主內容區 ===== -->
-    <main id="main-content">
-      <!-- 頂部標頭 -->
-      <header id="main-header">
-        <button id="mobile-menu-btn" class="icon-btn mobile-only" onclick="toggleSidebar()">☰</button>
-        <div class="header-left">
-          <h2 id="view-title">☀️ 我的一天</h2>
-          <span id="view-date" class="header-date"></span>
+    <!-- 主區 -->
+    <main id="main">
+      <header id="main-hd">
+        <button class="ibtn mob" onclick="toggleSidebar()">☰</button>
+        <div class="hd-left">
+          <h2 id="v-title">☀️ 我的一天</h2>
+          <span class="hd-date" id="v-date"></span>
         </div>
-        <div class="header-actions">
-          <div class="sort-dropdown">
-            <button class="icon-btn" id="sort-btn" title="排序">⇅</button>
-            <div class="sort-menu hidden" id="sort-menu">
-              <button data-sort="default">預設</button>
-              <button data-sort="alpha">名稱 A→Z</button>
-              <button data-sort="alpha-desc">名稱 Z→A</button>
-              <button data-sort="due">到期日</button>
-              <button data-sort="created">建立日期</button>
-              <button data-sort="important">重要性</button>
-            </div>
+        <div class="hd-acts">
+          <div class="sort-wrap">
+            <button class="ibtn" onclick="toggleSort()" title="排序">⇅</button>
+            <div class="sort-menu hidden" id="sort-menu"></div>
           </div>
-          <button class="icon-btn" id="suggestions-btn" title="建議" onclick="toggleSuggestions()">💡</button>
+          <button class="ibtn" id="sug-btn" onclick="toggleSug()" title="建議">💡</button>
         </div>
       </header>
 
-      <!-- 建議面板 -->
-      <div id="suggestions-panel" class="suggestions-panel hidden">
-        <div class="suggestions-header">
+      <div class="sug-panel hidden" id="sug-panel">
+        <div class="sug-hd">
           <h3>💡 建議</h3>
-          <button class="icon-btn" onclick="toggleSuggestions()">✕</button>
+          <button class="ibtn" onclick="toggleSug()">✕</button>
         </div>
-        <div id="suggestions-list" class="suggestions-list"></div>
+        <div id="sug-list"></div>
       </div>
 
-      <!-- 新增任務輸入 -->
-      <div id="add-task-bar" class="add-task-bar">
-        <button class="add-task-circle" id="add-task-circle-btn">＋</button>
-        <input type="text" id="add-task-input" placeholder="新增任務" autocomplete="off" />
-        <div class="add-task-shortcuts">
-          <button class="shortcut-btn" id="shortcut-myday" title="加入我的一天">☀️</button>
-          <button class="shortcut-btn" id="shortcut-due" title="設定到期日">📅</button>
-          <button class="shortcut-btn" id="shortcut-important" title="標記為重要">⭐</button>
+      <div class="add-bar">
+        <button class="add-circle" onclick="document.getElementById('add-in').focus()">＋</button>
+        <input type="text" id="add-in" placeholder="新增任務" autocomplete="off" />
+        <div class="sc-btns">
+          <button class="sc-btn" id="sc-myday" title="加入我的一天" onclick="toggleSc('myday')">☀️</button>
+          <button class="sc-btn" id="sc-imp" title="重要" onclick="toggleSc('imp')">⭐</button>
+          <button class="sc-btn" id="sc-due" title="今天到期" onclick="toggleSc('due')">📅</button>
         </div>
       </div>
 
-      <!-- 任務清單 -->
-      <div id="task-list-container" class="task-list-container">
-        <div id="task-list" class="task-list"></div>
-
-        <!-- 已完成摺疊區 -->
-        <div id="completed-section" class="completed-section hidden">
-          <button id="completed-toggle" class="completed-toggle">
-            <span class="toggle-arrow">▶</span>
-            已完成 <span id="completed-count-inline">0</span>
+      <div class="tl-wrap" id="tl-wrap">
+        <div class="tl" id="task-list"></div>
+        <div class="comp-sec hidden" id="comp-sec">
+          <button class="comp-tog" id="comp-tog">
+            <span class="tog-arrow" id="tog-arrow">▶</span>
+            已完成 <span id="comp-cnt">0</span>
           </button>
-          <div id="completed-list" class="task-list hidden"></div>
+          <div class="tl hidden" id="comp-list"></div>
         </div>
       </div>
 
-      <!-- 空狀態 -->
-      <div id="empty-state" class="empty-state hidden">
-        <div class="empty-icon" id="empty-icon">☀️</div>
-        <h3 id="empty-title">專注你的一天</h3>
-        <p id="empty-desc">你今天想做什麼？</p>
+      <div class="empty hidden" id="empty-st">
+        <div class="empty-ic" id="emp-ic">☀️</div>
+        <h3 id="emp-t">專注你的一天</h3>
+        <p id="emp-d">你今天想完成什麼？</p>
       </div>
     </main>
 
-    <!-- ===== 任務詳情面板 ===== -->
-    <aside id="detail-panel" class="detail-panel hidden">
-      <div class="detail-header">
-        <button class="icon-btn" onclick="closeDetail()">✕</button>
-        <button class="icon-btn danger-text" id="delete-task-btn" title="刪除任務">🗑️</button>
+    <!-- 詳情 -->
+    <aside id="detail" class="hidden">
+      <div class="det-hd">
+        <button class="ibtn" onclick="closeDetail()">✕</button>
+        <button class="ibtn danger-text" id="del-btn" title="刪除">🗑️</button>
       </div>
-
-      <div class="detail-body">
-        <!-- 標題 -->
-        <div class="detail-title-row">
-          <button class="task-check-detail" id="detail-check"></button>
-          <input type="text" id="detail-title" class="detail-title-input" />
-          <button class="star-btn" id="detail-star">☆</button>
+      <div class="det-body">
+        <div class="det-title-row">
+          <button class="dcheck" id="d-check"></button>
+          <input type="text" class="dtitle-in" id="d-title" />
+          <button class="dstar" id="d-star">☆</button>
         </div>
 
-        <!-- 子任務 / 步驟 -->
-        <div class="detail-section">
-          <div id="steps-list" class="steps-list"></div>
-          <div class="add-step-row">
-            <span class="step-icon">＋</span>
-            <input type="text" id="add-step-input" placeholder="新增步驟" />
+        <div class="det-sec">
+          <div class="steps-list" id="d-steps"></div>
+          <div class="add-step">
+            <span>＋</span>
+            <input type="text" id="d-add-step" placeholder="新增步驟" />
           </div>
         </div>
 
-        <!-- 加入我的一天 -->
-        <button class="detail-action-btn" id="detail-myday-btn">
-          <span>☀️</span> <span id="detail-myday-text">加入「我的一天」</span>
-        </button>
+        <button class="dact" id="d-myday"><span>☀️</span><span id="d-myday-t">加入「我的一天」</span></button>
 
-        <!-- 提醒 -->
-        <div class="detail-action-btn" id="detail-reminder-btn">
-          <span>🔔</span>
-          <span id="detail-reminder-text">提醒我</span>
-          <button class="clear-btn hidden" id="clear-reminder-btn">✕</button>
+        <div class="dact" id="d-rem-btn">
+          <span>🔔</span><span id="d-rem-t">提醒我</span>
+          <button class="clr-btn hidden" id="clr-rem">✕</button>
         </div>
-        <input type="datetime-local" id="detail-reminder-input" class="hidden" />
+        <input type="datetime-local" id="d-rem-in" class="hidden" style="margin:0 11px 6px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.83rem" />
 
-        <!-- 到期日 -->
-        <div class="detail-action-btn" id="detail-due-btn">
-          <span>📅</span>
-          <span id="detail-due-text">新增到期日</span>
-          <button class="clear-btn hidden" id="clear-due-btn">✕</button>
+        <div class="dact" id="d-due-btn">
+          <span>📅</span><span id="d-due-t">新增到期日</span>
+          <button class="clr-btn hidden" id="clr-due">✕</button>
         </div>
-        <input type="date" id="detail-due-input" class="hidden" />
+        <input type="date" id="d-due-in" class="hidden" style="margin:0 11px 6px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.83rem" />
 
-        <!-- 重複 -->
-        <div class="detail-action-btn" id="detail-repeat-btn">
-          <span>🔁</span>
-          <span id="detail-repeat-text">重複</span>
+        <div class="dact" id="d-rep-btn">
+          <span>🔁</span><span id="d-rep-t">重複</span>
         </div>
-        <select id="detail-repeat-select" class="hidden">
+        <select id="d-rep-sel" class="hidden" style="margin:0 11px 6px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.83rem;width:calc(100% - 22px)">
           <option value="">不重複</option>
           <option value="daily">每天</option>
           <option value="weekdays">每個工作日</option>
@@ -194,57 +344,598 @@
           <option value="yearly">每年</option>
         </select>
 
-        <!-- 分類標籤 -->
-        <div class="detail-section">
-          <div class="detail-action-btn" id="detail-category-btn">
-            <span>🏷️</span>
-            <span>分類標籤</span>
-          </div>
-          <div id="category-chips" class="category-chips"></div>
-          <div id="category-picker" class="category-picker hidden">
-            <button class="cat-chip" data-color="blue" style="--cat-color:#4A90D9">🔵 藍色</button>
-            <button class="cat-chip" data-color="red" style="--cat-color:#E74C3C">🔴 紅色</button>
-            <button class="cat-chip" data-color="orange" style="--cat-color:#F39C12">🟠 橙色</button>
-            <button class="cat-chip" data-color="green" style="--cat-color:#27AE60">🟢 綠色</button>
-            <button class="cat-chip" data-color="purple" style="--cat-color:#8E44AD">🟣 紫色</button>
-            <button class="cat-chip" data-color="yellow" style="--cat-color:#F1C40F">🟡 黃色</button>
-          </div>
+        <div class="det-sec">
+          <button class="dact" id="d-cat-btn"><span>🏷️</span><span>分類標籤</span></button>
+          <div class="cat-chips" id="d-cat-chips"></div>
+          <div class="cat-pick hidden" id="d-cat-pick"></div>
         </div>
 
-        <!-- 附檔 -->
-        <button class="detail-action-btn" id="detail-file-btn">
-          <span>📎</span> <span>新增檔案</span>
-        </button>
-        <div id="file-list" class="file-list"></div>
-
-        <!-- 備註 -->
-        <div class="detail-section notes-section">
-          <textarea id="detail-notes" placeholder="新增備註" rows="3"></textarea>
+        <div class="det-sec notes-sec">
+          <textarea id="d-notes" placeholder="新增備註" rows="3"></textarea>
         </div>
       </div>
-
-      <div class="detail-footer">
-        <span id="detail-created">建立於</span>
-      </div>
+      <div class="det-ft" id="d-created"></div>
     </aside>
   </div>
 
-  <!-- ===== 日期快捷選單 ===== -->
-  <div id="date-quick-menu" class="date-quick-menu hidden">
-    <button data-date="today">📌 今天</button>
-    <button data-date="tomorrow">📅 明天</button>
-    <button data-date="next-week">📆 下週</button>
-    <button data-date="pick">🗓️ 選擇日期...</button>
-  </div>
+  <!-- 日期快捷 -->
+  <div class="dq-menu hidden" id="dq-menu"></div>
 
-  <!-- ===== Toast ===== -->
-  <div id="toast-container" class="toast-container"></div>
+  <!-- Toast -->
+  <div class="toast-wrap" id="toast-wrap"></div>
 
-  <script src="js/store.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/list.js"></script>
-  <script src="js/task.js"></script>
-  <script src="js/sidebar.js"></script>
-  <script src="js/app.js"></script>
+<script>
+/* ================================================================
+   STORE
+   ================================================================ */
+const SK='mytodo_v2';
+const CATS={blue:'#4A90D9',red:'#E74C3C',orange:'#F39C12',green:'#27AE60',purple:'#8E44AD',yellow:'#F1C40F'};
+
+function defData(){return{lists:[],tasks:[],settings:{theme:'light',sort:'default',view:'myday',sidebarOff:true}}}
+const D={_d:null,
+  load(){try{const r=localStorage.getItem(SK);if(!r){this._d=defData();return}const p=JSON.parse(r);const d=defData();this._d={...d,...p,settings:{...d.settings,...(p.settings||{})}}}catch(e){this._d=defData()}},
+  save(){try{localStorage.setItem(SK,JSON.stringify(this._d))}catch(e){}},
+  get d(){if(!this._d)this.load();return this._d},
+  addTask(t){this._d.tasks.push(t);this.save()},
+  updTask(id,u){const t=this._d.tasks.find(x=>x.id===id);if(t)Object.assign(t,u);this.save();return t},
+  delTask(id){this._d.tasks=this._d.tasks.filter(x=>x.id!==id);this.save()},
+  getTask(id){return this._d.tasks.find(x=>x.id===id)},
+  addList(l){this._d.lists.push(l);this.save()},
+  updList(id,u){const l=this._d.lists.find(x=>x.id===id);if(l)Object.assign(l,u);this.save()},
+  delList(id){this._d.lists=this._d.lists.filter(x=>x.id!==id);this._d.tasks=this._d.tasks.filter(x=>x.listId!==id);this.save()},
+};
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function fmtD(d){if(!d)return'';if(typeof d==='string')d=new Date(d);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function todayStr(){return fmtD(new Date())}
+function fmtDisp(s){if(!s)return'';const d=new Date(s+'T00:00:00'),t=new Date();t.setHours(0,0,0,0);const tm=new Date(t);tm.setDate(tm.getDate()+1);if(d.getTime()===t.getTime())return'今天';if(d.getTime()===tm.getTime())return'明天';const y=new Date(t);y.setDate(y.getDate()-1);if(d.getTime()===y.getTime())return'昨天';const o={month:'short',day:'numeric'};if(d.getFullYear()!==t.getFullYear())o.year='numeric';return d.toLocaleDateString('zh-TW',o)}
+function fmtDT(s){if(!s)return'';return new Date(s).toLocaleString('zh-TW',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function isOver(s){if(!s)return false;return new Date(s+'T23:59:59')<new Date()}
+function isToday(s){return s===todayStr()}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+
+function getByView(v,comp){
+  const ts=D.d.tasks,td=todayStr();
+  return ts.filter(t=>{
+    if(comp?!t.completed:t.completed)return false;
+    switch(v){
+      case'myday':return t.myDay===td;
+      case'important':return t.important;
+      case'planned':return!!t.dueDate;
+      case'all':return true;
+      case'completed':return comp?false:true;
+      default:return t.listId===v;
+    }
+  });
+}
+
+function sortArr(arr,type){
+  const a=[...arr];
+  switch(type){
+    case'alpha':return a.sort((x,y)=>x.title.localeCompare(y.title,'zh'));
+    case'alpha-desc':return a.sort((x,y)=>y.title.localeCompare(x.title,'zh'));
+    case'due':return a.sort((x,y)=>(x.dueDate||'9').localeCompare(y.dueDate||'9'));
+    case'created':return a.sort((x,y)=>y.createdAt.localeCompare(x.createdAt));
+    case'important':return a.sort((x,y)=>(y.important?1:0)-(x.important?1:0));
+    default:return a;
+  }
+}
+
+/* ================================================================
+   GLOBAL STATE
+   ================================================================ */
+let curId=null; // current task detail
+let scMyday=false,scImp=false,scDue=false;
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+// Smart lists definition
+const SMART=[
+  {id:'myday',icon:'☀️',label:'我的一天'},
+  {id:'important',icon:'⭐',label:'重要'},
+  {id:'planned',icon:'📅',label:'已規劃'},
+  {id:'all',icon:'📋',label:'所有任務'},
+  {id:'completed',icon:'✅',label:'已完成'},
+];
+
+function renderSmartLists(){
+  const c=document.getElementById('smart-lists');c.innerHTML='';
+  const v=D.d.settings.view,td=todayStr(),ts=D.d.tasks;
+  const counts={
+    myday:ts.filter(t=>!t.completed&&t.myDay===td).length,
+    important:ts.filter(t=>!t.completed&&t.important).length,
+    planned:ts.filter(t=>!t.completed&&t.dueDate).length,
+    all:ts.filter(t=>!t.completed).length,
+    completed:ts.filter(t=>t.completed).length,
+  };
+  SMART.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='snav-item'+(v===s.id?' active':'');
+    b.innerHTML=`<span class="snav-icon">${s.icon}</span><span class="snav-lbl">${s.label}</span><span class="snav-cnt">${counts[s.id]||''}</span>`;
+    b.onclick=()=>switchView(s.id);
+    c.appendChild(b);
+  });
+}
+
+function renderCustomLists(){
+  const c=document.getElementById('custom-lists');c.innerHTML='';
+  const v=D.d.settings.view;
+  D.d.lists.forEach(l=>{
+    const cnt=D.d.tasks.filter(t=>!t.completed&&t.listId===l.id).length;
+    const w=document.createElement('div');w.className='list-wrap';
+    w.innerHTML=`
+      <button class="snav-item${v===l.id?' active':''}" data-v="${l.id}">
+        <span class="snav-icon"><span class="list-dot" style="background:${l.color||'var(--accent)'}"></span></span>
+        <span class="snav-lbl">${esc(l.name)}</span>
+        <span class="snav-cnt">${cnt||''}</span>
+      </button>
+      <div class="list-acts">
+        <button class="la-btn" data-e="${l.id}">✏️</button>
+        <button class="la-btn" data-d="${l.id}">🗑️</button>
+      </div>`;
+    w.querySelector('[data-v]').onclick=()=>switchView(l.id);
+    w.querySelector('[data-e]').onclick=e=>{e.stopPropagation();renameList(l.id)};
+    w.querySelector('[data-d]').onclick=e=>{e.stopPropagation();deleteList(l.id)};
+    c.appendChild(w);
+  });
+}
+
+function renderTasks(){
+  const v=D.d.settings.view;
+  let tasks=getByView(v,false);
+  let comp=v==='completed'?[]:getByView(v,true);
+  tasks=sortArr(tasks,D.d.settings.sort);
+  comp=sortArr(comp,D.d.settings.sort);
+
+  const tl=document.getElementById('task-list');
+  const cs=document.getElementById('comp-sec');
+  const cl=document.getElementById('comp-list');
+  const em=document.getElementById('empty-st');
+
+  tl.innerHTML='';cl.innerHTML='';
+
+  // For "completed" view, show all completed tasks in main list
+  if(v==='completed'){
+    const allComp=sortArr(D.d.tasks.filter(t=>t.completed),D.d.settings.sort);
+    if(allComp.length===0){em.classList.remove('hidden');cs.classList.add('hidden');setEmpty(v);return}
+    em.classList.add('hidden');cs.classList.add('hidden');
+    allComp.forEach(t=>tl.appendChild(mkCard(t)));
+    return;
+  }
+
+  if(tasks.length===0&&comp.length===0){em.classList.remove('hidden');cs.classList.add('hidden');setEmpty(v);return}
+  em.classList.add('hidden');
+
+  tasks.forEach(t=>tl.appendChild(mkCard(t)));
+
+  if(comp.length>0){
+    cs.classList.remove('hidden');
+    document.getElementById('comp-cnt').textContent=comp.length;
+    comp.forEach(t=>cl.appendChild(mkCard(t)));
+  }else{cs.classList.add('hidden')}
+}
+
+function mkCard(t){
+  const d=document.createElement('div');
+  d.className='tc'+(t.completed?' done':'')+(curId===t.id?' sel':'');
+  const ts2=t.steps||[],totS=ts2.length,doneS=ts2.filter(s=>s.completed).length;
+  let metas=[];
+  const v=D.d.settings.view;
+  if(t.myDay===todayStr()&&v!=='myday')metas.push('<span class="mi">☀️</span>');
+  if(t.dueDate){const cls=t.completed?'':isOver(t.dueDate)?'overdue':isToday(t.dueDate)?'today':'';metas.push(`<span class="mi ${cls}">📅 ${fmtDisp(t.dueDate)}</span>`)}
+  if(t.repeat)metas.push('<span class="mi">🔁</span>');
+  if(t.reminder)metas.push(`<span class="mi">🔔 ${fmtDT(t.reminder)}</span>`);
+  if(totS>0)metas.push(`<span class="mi">📝 ${doneS}/${totS}</span>`);
+  if(t.listId){const l=D.d.lists.find(x=>x.id===t.listId);if(l)metas.push(`<span class="mi">📂 ${esc(l.name)}</span>`)}
+  if(t.categories&&t.categories.length){const dots=t.categories.map(c=>`<span class="cdot" style="background:${CATS[c]||'#999'}"></span>`).join('');metas.push(`<span class="cdots">${dots}</span>`)}
+  const metaH=metas.length?`<div class="tmeta">${metas.join('')}</div>`:'';
+
+  d.innerHTML=`
+    <div class="tcheck">${t.completed?'✓':''}</div>
+    <div class="tbody"><div class="ttitle">${esc(t.title)}</div>${metaH}</div>
+    <button class="tstar${t.important?' on':''}">${t.important?'★':'☆'}</button>`;
+
+  d.querySelector('.tcheck').onclick=e=>{e.stopPropagation();toggleComp(t.id)};
+  d.querySelector('.tbody').onclick=()=>openDetail(t.id);
+  d.querySelector('.tstar').onclick=e=>{e.stopPropagation();toggleImp(t.id)};
+  return d;
+}
+
+function setEmpty(v){
+  const m={myday:['☀️','專注你的一天','你今天想完成什麼？'],important:['⭐','沒有重要任務','標記星號的任務會在這裡'],planned:['📅','沒有已規劃任務','設定到期日的任務會在這裡'],all:['📋','沒有任務','新增一些任務開始吧'],completed:['✅','沒有已完成任務','完成任務後會在這裡']};
+  const d=m[v]||['📂','清單是空的','新增任務開始吧'];
+  document.getElementById('emp-ic').textContent=d[0];
+  document.getElementById('emp-t').textContent=d[1];
+  document.getElementById('emp-d').textContent=d[2];
+}
+
+function renderAll(){renderSmartLists();renderCustomLists();renderTasks()}
+
+/* ================================================================
+   ACTIONS
+   ================================================================ */
+function toggleComp(id){
+  const t=D.getTask(id);if(!t)return;
+  t.completed=!t.completed;
+  t.completedAt=t.completed?new Date().toISOString():'';
+  if(t.completed&&t.repeat){
+    const nd=nextRep(t.dueDate,t.repeat);
+    if(nd){const n={...JSON.parse(JSON.stringify(t)),id:gid(),completed:false,completedAt:'',dueDate:nd,createdAt:new Date().toISOString()};n.steps=(t.steps||[]).map(s=>({...s,completed:false}));D.addTask(n)}
+  }
+  D.save();renderAll();
+  if(curId===id)renderDet(id);
+}
+
+function toggleImp(id){
+  const t=D.getTask(id);if(!t)return;
+  t.important=!t.important;D.save();renderAll();
+  if(curId===id)renderDet(id);
+}
+
+function nextRep(due,rep){
+  const b=due?new Date(due+'T00:00:00'):new Date();
+  switch(rep){
+    case'daily':b.setDate(b.getDate()+1);break;
+    case'weekdays':do{b.setDate(b.getDate()+1)}while(b.getDay()===0||b.getDay()===6);break;
+    case'weekly':b.setDate(b.getDate()+7);break;
+    case'monthly':b.setMonth(b.getMonth()+1);break;
+    case'yearly':b.setFullYear(b.getFullYear()+1);break;
+    default:return'';
+  }
+  return fmtD(b);
+}
+
+/* ================================================================
+   ADD TASK
+   ================================================================ */
+function initAddBar(){
+  const inp=document.getElementById('add-in');
+  inp.onkeydown=e=>{
+    if(e.key==='Enter'&&inp.value.trim()){
+      const v=D.d.settings.view,td=todayStr();
+      const t={
+        id:gid(),title:inp.value.trim(),notes:'',completed:false,
+        important:scImp||(v==='important'),
+        myDay:(scMyday||(v==='myday'))?td:'',
+        dueDate:scDue?td:'',
+        reminder:'',repeat:'',
+        listId:(!['myday','important','planned','all','completed'].includes(v))?v:'',
+        categories:[],steps:[],files:[],
+        createdAt:new Date().toISOString(),completedAt:''
+      };
+      D.addTask(t);inp.value='';
+      toast('✅ 任務已新增');
+      renderAll();
+    }
+  };
+}
+
+function toggleSc(type){
+  if(type==='myday'){scMyday=!scMyday;document.getElementById('sc-myday').classList.toggle('on',scMyday)}
+  if(type==='imp'){scImp=!scImp;document.getElementById('sc-imp').classList.toggle('on',scImp)}
+  if(type==='due'){scDue=!scDue;document.getElementById('sc-due').classList.toggle('on',scDue)}
+}
+
+function resetSc(){
+  const v=D.d.settings.view;
+  scMyday=v==='myday';scImp=v==='important';scDue=false;
+  document.getElementById('sc-myday').classList.toggle('on',scMyday);
+  document.getElementById('sc-imp').classList.toggle('on',scImp);
+  document.getElementById('sc-due').classList.toggle('on',scDue);
+}
+
+/* ================================================================
+   DETAIL PANEL
+   ================================================================ */
+function openDetail(id){curId=id;document.getElementById('detail').classList.remove('hidden');renderDet(id);renderTasks()}
+function closeDetail(){curId=null;document.getElementById('detail').classList.add('hidden');renderTasks()}
+
+function renderDet(id){
+  const t=D.getTask(id);if(!t){closeDetail();return}
+
+  // Check
+  const ck=document.getElementById('d-check');
+  ck.className='dcheck'+(t.completed?' on':'');ck.textContent=t.completed?'✓':'';
+  ck.onclick=()=>toggleComp(id);
+
+  // Title
+  const ti=document.getElementById('d-title');
+  ti.value=t.title;ti.className='dtitle-in'+(t.completed?' line':'');
+  ti.oninput=()=>{D.updTask(id,{title:ti.value});renderTasks()};
+
+  // Star
+  const st=document.getElementById('d-star');
+  st.className='dstar'+(t.important?' on':'');st.textContent=t.important?'★':'☆';
+  st.onclick=()=>toggleImp(id);
+
+  // Steps
+  renderSteps(t);
+
+  // My Day
+  const td=todayStr(),isMd=t.myDay===td;
+  const mdBtn=document.getElementById('d-myday');
+  mdBtn.className='dact'+(isMd?' on':'');
+  document.getElementById('d-myday-t').textContent=isMd?'已加入「我的一天」':'加入「我的一天」';
+  mdBtn.onclick=()=>{D.updTask(id,{myDay:isMd?'':td});renderDet(id);renderAll()};
+
+  // Reminder
+  const remT=document.getElementById('d-rem-t'),remIn=document.getElementById('d-rem-in'),remBtn=document.getElementById('d-rem-btn'),clrR=document.getElementById('clr-rem');
+  if(t.reminder){remT.textContent=fmtDT(t.reminder);remBtn.classList.add('on');clrR.classList.remove('hidden')}
+  else{remT.textContent='提醒我';remBtn.classList.remove('on');clrR.classList.add('hidden')}
+  remBtn.onclick=e=>{if(e.target===clrR||clrR.contains(e.target))return;remIn.classList.toggle('hidden');if(!remIn.classList.contains('hidden'))remIn.focus()};
+  remIn.value=t.reminder?t.reminder.slice(0,16):'';
+  remIn.onchange=()=>{D.updTask(id,{reminder:remIn.value?new Date(remIn.value).toISOString():''});remIn.classList.add('hidden');renderDet(id);renderTasks()};
+  clrR.onclick=e=>{e.stopPropagation();D.updTask(id,{reminder:''});renderDet(id);renderTasks()};
+
+  // Due
+  const dueT=document.getElementById('d-due-t'),dueIn=document.getElementById('d-due-in'),dueBtn=document.getElementById('d-due-btn'),clrD=document.getElementById('clr-due');
+  if(t.dueDate){dueT.textContent=fmtDisp(t.dueDate);dueBtn.classList.add('on');clrD.classList.remove('hidden')}
+  else{dueT.textContent='新增到期日';dueBtn.classList.remove('on');clrD.classList.add('hidden')}
+  dueBtn.onclick=e=>{
+    if(e.target===clrD||clrD.contains(e.target))return;
+    showDQ(dueBtn,ds=>{D.updTask(id,{dueDate:ds});renderDet(id);renderAll()},()=>{dueIn.classList.remove('hidden');dueIn.focus()});
+  };
+  dueIn.value=t.dueDate||'';
+  dueIn.onchange=()=>{D.updTask(id,{dueDate:dueIn.value});dueIn.classList.add('hidden');renderDet(id);renderAll()};
+  clrD.onclick=e=>{e.stopPropagation();D.updTask(id,{dueDate:''});renderDet(id);renderAll()};
+
+  // Repeat
+  const repT=document.getElementById('d-rep-t'),repS=document.getElementById('d-rep-sel'),repB=document.getElementById('d-rep-btn');
+  const repL={'':'重複',daily:'每天',weekdays:'每個工作日',weekly:'每週',monthly:'每月',yearly:'每年'};
+  repT.textContent=repL[t.repeat||'']||'重複';repB.className='dact'+(t.repeat?' on':'');
+  repB.onclick=()=>repS.classList.toggle('hidden');
+  repS.value=t.repeat||'';
+  repS.onchange=()=>{D.updTask(id,{repeat:repS.value});repS.classList.add('hidden');renderDet(id);renderTasks()};
+
+  // Categories
+  renderCats(t);
+
+  // Notes
+  const no=document.getElementById('d-notes');no.value=t.notes||'';
+  no.oninput=()=>D.updTask(id,{notes:no.value});
+
+  // Delete
+  document.getElementById('del-btn').onclick=()=>{if(confirm('確定刪除？')){D.delTask(id);closeDetail();renderAll();toast('任務已刪除')}};
+
+  // Created
+  document.getElementById('d-created').textContent='建立於 '+new Date(t.createdAt).toLocaleString('zh-TW');
+}
+
+function renderSteps(t){
+  const c=document.getElementById('d-steps');c.innerHTML='';
+  if(!t.steps)t.steps=[];
+  t.steps.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='step';
+    d.innerHTML=`<button class="scheck${s.completed?' on':''}">${s.completed?'✓':''}</button><input class="stitle${s.completed?' line':''}" value="${esc(s.title)}" /><button class="sdel">✕</button>`;
+    d.querySelector('.scheck').onclick=()=>{t.steps[i].completed=!t.steps[i].completed;D.save();renderDet(t.id);renderTasks()};
+    d.querySelector('.stitle').oninput=e=>{t.steps[i].title=e.target.value;D.save()};
+    d.querySelector('.sdel').onclick=()=>{t.steps.splice(i,1);D.save();renderDet(t.id);renderTasks()};
+    c.appendChild(d);
+  });
+  const ai=document.getElementById('d-add-step');
+  // Clone to clear old listeners
+  const ni=ai.cloneNode(true);ai.parentNode.replaceChild(ni,ai);
+  ni.id='d-add-step';
+  ni.onkeydown=e=>{if(e.key==='Enter'&&ni.value.trim()){t.steps.push({title:ni.value.trim(),completed:false});D.save();renderDet(t.id);renderTasks();setTimeout(()=>document.getElementById('d-add-step').focus(),50)}};
+}
+
+function renderCats(t){
+  const cc=document.getElementById('d-cat-chips'),pk=document.getElementById('d-cat-pick');
+  cc.innerHTML='';
+  if(!t.categories)t.categories=[];
+  t.categories.forEach(cat=>{
+    const ch=document.createElement('span');ch.className='cat-chip';ch.style.background=CATS[cat]||'#999';
+    ch.innerHTML=`${cat} <button class="rx">✕</button>`;
+    ch.querySelector('.rx').onclick=()=>{t.categories=t.categories.filter(c=>c!==cat);D.save();renderDet(t.id);renderTasks()};
+    cc.appendChild(ch);
+  });
+  document.getElementById('d-cat-btn').onclick=()=>pk.classList.toggle('hidden');
+  pk.innerHTML='';
+  Object.entries(CATS).forEach(([k,v])=>{
+    const b=document.createElement('button');b.className='cpk';b.textContent=k;b.style.borderColor=v;
+    b.onclick=()=>{if(!t.categories.includes(k)){t.categories.push(k);D.save();renderDet(t.id);renderTasks()}pk.classList.add('hidden')};
+    pk.appendChild(b);
+  });
+}
+
+/* ================================================================
+   DATE QUICK MENU
+   ================================================================ */
+function showDQ(anchor,onSel,onPick){
+  const m=document.getElementById('dq-menu'),r=anchor.getBoundingClientRect();
+  m.style.top=(r.bottom+4)+'px';m.style.left=r.left+'px';
+  m.classList.remove('hidden');
+  const t=new Date(),tm=new Date(t);tm.setDate(tm.getDate()+1);
+  const nw=new Date(t);nw.setDate(nw.getDate()+(8-nw.getDay())%7||7);
+  m.innerHTML='';
+  [{l:'📌 今天',d:fmtD(t)},{l:'📅 明天',d:fmtD(tm)},{l:'📆 下週',d:fmtD(nw)},{l:'🗓️ 選擇日期...',d:'pick'}].forEach(o=>{
+    const b=document.createElement('button');b.textContent=o.l;
+    b.onclick=()=>{m.classList.add('hidden');if(o.d==='pick')onPick();else onSel(o.d)};
+    m.appendChild(b);
+  });
+  const close=e=>{if(!m.contains(e.target)&&!anchor.contains(e.target)){m.classList.add('hidden');document.removeEventListener('click',close)}};
+  setTimeout(()=>document.addEventListener('click',close),10);
+}
+
+/* ================================================================
+   VIEW SWITCHING
+   ================================================================ */
+function switchView(v){
+  D.d.settings.view=v;D.save();
+  document.getElementById('search-in').value='';
+  closeDetail();
+  document.getElementById('sug-panel').classList.add('hidden');
+  updateHeader(v);resetSc();renderAll();
+  if(window.innerWidth<=700)document.getElementById('sidebar').classList.add('collapsed');
+}
+
+function updateHeader(v){
+  const m={myday:'☀️ 我的一天',important:'⭐ 重要',planned:'📅 已規劃',all:'📋 所有任務',completed:'✅ 已完成'};
+  const l=D.d.lists.find(x=>x.id===v);
+  document.getElementById('v-title').textContent=m[v]||(l?'📂 '+l.name:'📋 任務');
+  const de=document.getElementById('v-date');
+  de.textContent=v==='myday'?new Date().toLocaleDateString('zh-TW',{weekday:'long',month:'long',day:'numeric'}):'';
+  document.getElementById('sug-btn').style.display=v==='myday'?'':'none';
+}
+
+/* ================================================================
+   SIDEBAR
+   ================================================================ */
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');s.classList.toggle('collapsed');
+  D.d.settings.sidebarOff=s.classList.contains('collapsed');D.save();
+}
+
+/* ================================================================
+   LISTS
+   ================================================================ */
+function addNewList(){
+  const n=prompt('清單名稱：');if(!n||!n.trim())return;
+  const cols=['#4A90D9','#E74C3C','#F39C12','#27AE60','#8E44AD'];
+  const l={id:gid(),name:n.trim(),color:cols[D.d.lists.length%cols.length],createdAt:new Date().toISOString()};
+  D.addList(l);switchView(l.id);renderAll();
+}
+function renameList(id){
+  const l=D.d.lists.find(x=>x.id===id);if(!l)return;
+  const n=prompt('重新命名：',l.name);if(n&&n.trim()){D.updList(id,{name:n.trim()});renderAll()}
+}
+function deleteList(id){
+  const l=D.d.lists.find(x=>x.id===id);if(!l)return;
+  if(!confirm(`刪除「${l.name}」清單？\n清單中的任務也會刪除。`))return;
+  D.delList(id);if(D.d.settings.view===id)switchView('myday');renderAll();toast('清單已刪除');
+}
+
+/* ================================================================
+   SEARCH
+   ================================================================ */
+function initSearch(){
+  let tm=null;
+  const inp=document.getElementById('search-in');
+  inp.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{
+    const q=inp.value.trim().toLowerCase();
+    if(q)renderSearch(q);else renderTasks();
+  },200)};
+  inp.onkeydown=e=>{if(e.key==='Escape'){inp.value='';renderTasks()}};
+}
+
+function renderSearch(q){
+  const res=D.d.tasks.filter(t=>{
+    return t.title.toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q)||(t.steps||[]).some(s=>s.title.toLowerCase().includes(q));
+  });
+  const tl=document.getElementById('task-list'),cs=document.getElementById('comp-sec'),em=document.getElementById('empty-st');
+  tl.innerHTML='';cs.classList.add('hidden');
+  if(!res.length){em.classList.remove('hidden');document.getElementById('emp-ic').textContent='🔍';document.getElementById('emp-t').textContent='找不到結果';document.getElementById('emp-d').textContent=`找不到「${q}」相關任務`;return}
+  em.classList.add('hidden');
+  document.getElementById('v-title').textContent=`🔍 搜尋「${q}」（${res.length} 筆）`;
+  res.forEach(t=>tl.appendChild(mkCard(t)));
+}
+
+/* ================================================================
+   SORT
+   ================================================================ */
+function toggleSort(){document.getElementById('sort-menu').classList.toggle('hidden')}
+
+function initSort(){
+  const m=document.getElementById('sort-menu');m.innerHTML='';
+  [{k:'default',l:'預設'},{k:'alpha',l:'名稱 A→Z'},{k:'alpha-desc',l:'名稱 Z→A'},{k:'due',l:'到期日'},{k:'created',l:'建立日期'},{k:'important',l:'重要性'}].forEach(o=>{
+    const b=document.createElement('button');b.textContent=o.l;
+    b.onclick=()=>{D.d.settings.sort=o.k;D.save();m.classList.add('hidden');renderTasks();toast('排序：'+o.l)};
+    m.appendChild(b);
+  });
+  document.addEventListener('click',e=>{if(!m.contains(e.target)&&!m.previousElementSibling?.contains(e.target))m.classList.add('hidden')});
+}
+
+/* ================================================================
+   SUGGESTIONS
+   ================================================================ */
+function toggleSug(){document.getElementById('sug-panel').classList.toggle('hidden');renderSug()}
+function renderSug(){
+  const c=document.getElementById('sug-list');c.innerHTML='';
+  const td=todayStr();
+  const sugs=D.d.tasks.filter(t=>!t.completed&&t.myDay!==td&&(t.important||t.dueDate)).slice(0,10);
+  if(!sugs.length){c.innerHTML='<p style="color:var(--text3);font-size:.83rem;padding:6px">沒有建議</p>';return}
+  sugs.forEach(t=>{
+    const b=document.createElement('button');b.className='sug-item';
+    b.innerHTML=`<span>${t.important?'⭐':'📋'}</span><span style="flex:1">${esc(t.title)}</span><span style="font-size:.72rem;color:var(--text3)">${t.dueDate?fmtDisp(t.dueDate):''}</span><span style="color:var(--accent)">＋</span>`;
+    b.onclick=()=>{D.updTask(t.id,{myDay:td});renderSug();renderAll();toast('已加入「我的一天」')};
+    c.appendChild(b);
+  });
+}
+
+/* ================================================================
+   COMPLETED TOGGLE
+   ================================================================ */
+function initCompToggle(){
+  document.getElementById('comp-tog').onclick=()=>{
+    const cl=document.getElementById('comp-list'),ar=document.getElementById('tog-arrow');
+    cl.classList.toggle('hidden');ar.classList.toggle('open');
+  };
+}
+
+/* ================================================================
+   THEME
+   ================================================================ */
+function applyTheme(){document.documentElement.setAttribute('data-theme',D.d.settings.theme||'light')}
+function toggleTheme(){
+  const n=D.d.settings.theme==='dark'?'light':'dark';
+  D.d.settings.theme=n;D.save();applyTheme();
+  toast(n==='dark'?'🌙 深色模式':'☀️ 淺色模式');
+}
+
+/* ================================================================
+   EXPORT / IMPORT
+   ================================================================ */
+function doExport(){
+  const j=JSON.stringify(D.d,null,2),b=new Blob([j],{type:'application/json'}),u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='mytodo_'+fmtD(new Date())+'.json';a.click();URL.revokeObjectURL(u);toast('📤 已匯出');
+}
+function doImport(){
+  const i=document.createElement('input');i.type='file';i.accept='.json';
+  i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d&&Array.isArray(d.tasks)){const df=defData();D._d={...df,...d,settings:{...df.settings,...(d.settings||{})}};D.save();renderAll();switchView('myday');toast('📥 已匯入')}}catch(e){toast('❌ 匯入失敗')}};
+    r.readAsText(f)};
+  i.click();
+}
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+function toast(msg){
+  const c=document.getElementById('toast-wrap'),t=document.createElement('div');
+  t.className='toast';t.textContent=msg;c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300)},2500);
+}
+
+/* ================================================================
+   KEYBOARD SHORTCUTS
+   ================================================================ */
+function initKeys(){
+  document.onkeydown=e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();document.getElementById('add-in').focus()}
+    if((e.ctrlKey||e.metaKey)&&e.key==='/'){e.preventDefault();document.getElementById('search-in').focus()}
+    if(e.key==='Escape'){if(curId)closeDetail();document.getElementById('dq-menu').classList.add('hidden')}
+  };
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  D.load();
+  applyTheme();
+  if(D.d.settings.sidebarOff)document.getElementById('sidebar').classList.add('collapsed');
+  else document.getElementById('sidebar').classList.remove('collapsed');
+  initAddBar();
+  initSearch();
+  initSort();
+  initCompToggle();
+  initKeys();
+  switchView(D.d.settings.view||'myday');
+});
+</script>
 </body>
 </html>
